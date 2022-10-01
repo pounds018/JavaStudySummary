@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "cn.pounds.grpc.examples.helloword";
+option java_outer_classname = "HelloWorldProto";
+option objc_class_prefix = "HLW";
+
+package helloworld;
+
+// 定义客户端存根, 代理?
+service Greeter {
+  // 服务方发
+  rpc sayHello(HelloRequest) returns (HelloResponse) {}
+}
+// 请求类型枚举
+enum RequestType {
+  // 心跳请求
+  HEART_REQ = 0;
+  // 消息请求
+  MESSAGE_REQ = 1;
+}
+// 请求消息, 即rpc协议
+message HelloRequest {
+  string name = 1;
+  // 引入枚举
+  RequestType request_type = 2;
+  // 使用其他消息作为字段值
+  Student stu = 3;
+}
+
+message Student {
+  string name = 1;
+  int32 age = 2;
+}
+
+// 响应消息
+message HelloResponse {
+  string message = 1;
+}

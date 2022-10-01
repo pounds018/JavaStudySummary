@@ -1,0 +1,17 @@
+# es信息:
+elasticsearch:
+  host: 192.168.200.130
+  port1: 9201
+  port2: 9202
+  port3: 9203
+spring:
+  datasource:
+    url: jdbc:mysql://192.168.200.130:33066/es
+    username: root
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+mybatis-plus:
+  configuration:
+    # mp的驼峰命名开启
+    map-underscore-to-camel-case: false
