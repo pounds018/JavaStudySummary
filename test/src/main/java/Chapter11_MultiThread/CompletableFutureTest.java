@@ -31,4 +31,43 @@ public class CompletableFutureTest {
          * 当前线程是不是守护线程: true
          */
     }
+
+    @Test
+    public void testThenAcceptBoth(){
+        CompletableFuture<String> domainFuture = CompletableFuture.supplyAsync(() -> {
+            int a = 1;
+            if (a == 1) {
+                throw new RuntimeException("domain registry error");
+            }
+            return "name";
+        }).whenComplete((res, throwable) -> {
+            if (throwable == null) {
+                System.out.println("domain future completed without exception");
+            }
+        }).exceptionally((throwable -> {
+            System.out.println("domain future completed with error");
+            return null;
+        }));
+
+        CompletableFuture<String> fatpodDeploy = CompletableFuture.supplyAsync(() -> {
+            int a = 1;
+            if (a == 1) {
+                throw new RuntimeException("domain registry error");
+            }
+            return "11111111111111";
+        }).whenComplete((res, throwable) -> {
+            if (throwable == null) {
+                System.out.println("fatpod future completed without exception");
+            }
+        }).exceptionally(throwable -> {
+            System.out.println("fatpod future completed with exception");
+            return "error";
+        });
+
+        domainFuture.thenAcceptBoth(fatpodDeploy, (res1, res2) -> {
+            System.out.println(res1 + res2);
+        });
+
+
+    }
 }

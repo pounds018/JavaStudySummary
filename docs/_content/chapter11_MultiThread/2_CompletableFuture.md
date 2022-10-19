@@ -23,13 +23,13 @@
    ```java
         1. static <U> CompletableFuture<U> supplyAsync(Supplier<U> supplier) //不建议使用
         2. static <U> CompletableFuture<U> supplyAsync(Supplier<U> supplier, Executor executor)
-   ```  
+   ```
     2. `runAsync`: 创建一个可以获取任务执行结果的CompletableFuture
    > ps: `带Excutor参数表示使用自定义的线程池执行任务`,否则使用默认提供的ForkJoin.commonPool执行异步任务
     ```java
         1. static CompletableFuture<?Void> runAsync(Runnable runnable) //不建议使用
         2. static CompletableFuture<?Void> runAsync(Runnable runnable, Executor executor)
-    ```  
+    ```
     3. `completedFuture` : 创建一个已完成的任务,并且设置结果为value
    > ps : 由这个静态工厂方法创建出来的completableFuture是已经完成了的任务
     ```java
@@ -79,7 +79,7 @@
             return new ForkJoinPool(parallelism, factory, handler, LIFO_QUEUE,
                                     "ForkJoinPool.commonPool-worker-");
           }
-          ```  
+        ```
         - 验证 : 默认线程池创建的是守护线程
         ```java
         /**
@@ -102,7 +102,7 @@
             * 当前线程是不是守护线程: true
               */
           }
-        ```  
+        ```
     2. 关于如何估算`较为`合适的线程数量: 根据该线程池要处理的任务类型来设置线程数量 [出处](http://mng.bz/979c)
     - cpu密集型: 任务大多是由cpu进行计算的任务,设置线程数量为 cpu核心数(或者n+1)
     - i/o密集型: 任务大量时间花费在网络i/o,磁盘i/o上,设置线程数量为 cpu核心数*2  
@@ -168,20 +168,20 @@
               1. CompletableFuture<Void> thenAccept(Consumer<? super T> action)
               2. CompletableFuture<Void> thenAcceptAsync(Consumer<? super T> action)
               3. CompletableFuture<Void> thenAcceptAsync(Consumer<? super T> action, Executor executor)
-          ```    
+          ```
         - `thenApply`: 等待前置任务执行结束之后,接收前置任务的返回值作为action的参数,执行 `新任务`,`新任务有返回值`
           ```java
               1. <U> CompletableFuture<U> thenApply(Function<? super T,? extends U> fn)
               2. <U> CompletableFuture<U> thenApplyAsync(Function<? super T,? extends U> fn)
               3. <U> CompletableFuture<U> thenApplyAsync(Function<? super T,? extends U> fn, Executor executor)
-          ```    
+          ```
         - `thenCompose`: 等待前置任务执行结束之后,接收前置任务的返回值作为action的参数,执行 `新任务`,`新任务有返回值,且返回值类型为CompletionStage或其子类`
           ```java
               1. public <U> CompletableFuture<U> thenCompose(Function<? super T, ? extends CompletionStage<U>> fn)
               2. public <U> CompletableFuture<U> thenComposeAsync(Function<? super T, ? extends CompletionStage<U>> fn)
               3. public <U> CompletableFuture<U> thenComposeAsync(Function<? super T, ? extends CompletionStage<U>> fn,
               Executor executor)
-          ```  
+          ```
     2. 前置任务并行关系:
         1. 前置任务都执行完才执行新任务:
             - `runAfterBoth`: 该方法不关心前置任务的执行结果,新任务可以说是一个独立的新任务,只是在执行时间上需要等待前值任务执行完毕
@@ -199,7 +199,7 @@
                    other,BiConsumer<? super T, ? super U> action)
                  3. public <U> CompletableFuture<Void> thenAcceptBothAsync(CompletionStage<? extends U> other,
                    BiConsumer<? super T, ? super U> action, Executor executor)
-             ```   
+             ```
             - `thenCombine`: 与`thenAcceptBoth`的区别在于 `thenCombine`可以有返回值
              ```java
                  1. public <U,V> CompletableFuture<V> thenCombine(CompletionStage<? extends U> other, BiFunction<? super T,?
@@ -208,7 +208,7 @@
                    T,? super U,? extends V> fn)
                  3. public <U,V> CompletableFuture<V> thenCombineAsync(CompletionStage<? extends U> other, BiFunction<? super
                    T,? super U,? extends V> fn, Executor executor)
-             ```  
+             ```
         2. 前置任务其中一个完成执行,就执行新任务:
             - `runAfterEither` : 无返回值,不接收前置任务的执行结果作为参数
              ```java
@@ -234,7 +234,9 @@
                    Function<? super T, U> fn)
                  3. public <U> CompletableFuture<U> applyToEitherAsync(CompletionStage<? extends T> other,
                    Function<? super T, U> fn, Executor executor)
-             ```  
+             ```
+        
+        > ps: 以上方法都是需要等待前置方法完成之后, 才能继续执行后面的流程, `如果前置方法执行过程中出现了异常但是没有通过exceptionally()处理掉, 后面的方法不会执行, 但是不影响异步执行的其他方法`
     3. 异常处理:
         - `exceptionally`: 等价于catch,`似乎无法捕获Exception,必须通过catch捕获之后转换成CompletionException才能抛出`
         ```java 
@@ -251,7 +253,7 @@
             1. public CompletableFuture<T> whenComplete(BiConsumer<? super T, ? super Throwable> action)
             2. public CompletableFuture<T> whenCompleteAsync(BiConsumer<? super T, ? super Throwable> action, Executor executor)
             3. public CompletableFuture<T> whenCompleteAsync(BiConsumer<? super T, ? super Throwable> action, Executor executor)
-        ``` 
+        ```
     4. 多任务的简单组合:
         - `allOf`: 所有任务都完成才能执行新任务,无返回值
         ```java
@@ -260,10 +262,46 @@
         - `anyOf`: 所有任务完成其中一个就可以开始执行新任务
         ```java
             2. public static CompletableFuture<Object> anyOf(CompletableFuture<?>... cf)
-        ```  
-
+        ```
 
 ## 11.2.3 示例代码:
+
+### 1. thenAcceptBoth
+
 ```java
-// todo
+public void testThenAcceptBoth(){
+        CompletableFuture<String> domainFuture = CompletableFuture.supplyAsync(() -> {
+            int a = 1;
+            if (a == 1) {
+                throw new RuntimeException("domain registry error");
+            }
+            return "name";
+        }).whenComplete((res, throwable) -> {
+            if (throwable == null) {
+                System.out.println("domain future completed without exception");
+            }
+        }).exceptionally((throwable -> {
+            System.out.println("domain future completed with error");
+            return null;
+        }));
+
+        CompletableFuture<String> fatpodDeploy = CompletableFuture.supplyAsync(() -> {
+            int a = 1;
+            if (a == 1) {
+                throw new RuntimeException("domain registry error");
+            }
+            return "11111111111111";
+        }).whenComplete((res, throwable) -> {
+            if (throwable == null) {
+                System.out.println("fatpod future completed without exception");
+            }
+        }).exceptionally(throwable -> {
+            System.out.println("fatpod future completed with exception");
+            return "error";
+        });
+
+        domainFuture.thenAcceptBoth(fatpodDeploy, (res1, res2) -> {
+            System.out.println(res1 + res2);
+        });
+}
 ```
