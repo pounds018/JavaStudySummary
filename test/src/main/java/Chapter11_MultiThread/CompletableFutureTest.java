@@ -70,4 +70,13 @@ public class CompletableFutureTest {
 
 
     }
+
+    public static void main(String[] args) {
+        String a = "";
+        while (a.getBytes().length < 63) {
+            a += 'a';
+        }
+        System.out.println(a);
+        System.out.println(a.getBytes().length);
+    }
 }
