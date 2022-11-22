@@ -361,3 +361,95 @@ for (j = 0; j < server.saveparamslen; j++) {
          }
 ```
 
+
+
+
+
+### 10.3 RDB文件:
+
+主要介绍RDB文件的结构和意义.
+
+主体结构如下:
+
+![image-20221121224728309](E:\code\JavaStudySummary\docs\_content\chapter01_redis\redis设计与实现\test\image-20221121224728309.png)
+
+- `REDIS`: RDB文件的最开头时`REDIS`部分, 这个部分的长度为5字节, 保存着`REDIS`五个字符. 通过这五个字符, 程序可以在载入文件时, 快速检查所载入的文件是否是RDB文件.
+
+  > RDB文件存储的是二进制数据, 而不是c字符串, 只是为了方便理解, 采用c字符串.
+
+- `db_version`: 长度为4字节, 它的值时一个字符串表示的证书, 这个整数记录了RDB文件的版本号, 比如"0006"就代表RDB文件的版本为第六版. `后面所讲的都是第六版的结构`.
+
+- `database`部分包含着领个或者任意多个数据库, 以及各个数据库中的键值对数据:
+
+  - 如果服务器的数据库状态为空(所有数据库都是空的), 那么这个部分也为空, 长度为0字节．
+  - 如果服务器的数据库状态为非空(有至少一个数据库非空), 那么这个部分也非空, 根据数据库所保存键值对的数量, 类型和内容不同, 这部分的长度也不同.
+
+- `EOF`: EOF常量的长度为1字字节, 这个常量标志着RDB文件正文内容的结束, 当读入程序遇到这个值的时候, 程序就知道所有数据库的所有键值对都已经载入完毕.
+
+- `check_sum`: 是一个8字节长度的无符号证书, 保存着一个校验和, 这个校验和是通过前面四个部分的内容计算得到的. `主要时用来检查数据RDB文件是否损坏`.
+
+
+
+#### 1. databases部分:
+
+一个RDB文件的databases部分可以保存任意多个非空数据库.
+
+举个例子:
+
+服务器的0,3号数据库为非空, 那么RDB文件结构如图:
+
+![image-20221121230146189](E:\code\JavaStudySummary\docs\_content\chapter01_redis\redis设计与实现\test\image-20221121230146189.png)
+
+`每个非空数据库在RDB文件中都可以保存为SELECTDB, db_number, key_value_pairs三部分`:
+
+![image-20221121230302419](E:\code\JavaStudySummary\docs\_content\chapter01_redis\redis设计与实现\test\image-20221121230302419.png)
+
+- `SELECTDB`: 是个常量长度为1字节, 当读入程序遇到这个值的时候, 就明白接下来将要读入的僵尸一个数据库号码.
+- `db_number`: 保存着一个数据库号码, 根据号码的大小不同, 这个部分长度可以是1字节, 2字节, 或者5字节. 读入db_number部分之后, 服务器调用select命令, 根据读入的数据库号码进行数据库切换, 从而将读入的键值对可以加载到对应的rdb文件的数据库结构中
+- `key_value_pairs`: 保存了数据库中所有的键值对数据, 如果键值对带有过期时间, 那么过期时间也会和键值对保存在一起.
+
+
+
+**`完整RBD结构`**
+
+![image-20221121230939496](E:\code\JavaStudySummary\docs\_content\chapter01_redis\redis设计与实现\test\image-20221121230939496.png)
+
+
+
+#### 2. key_value_pairs部分:
+
+RDB文件中每个`key_value_pairs`部分都保存了一个或以上数据的键值对, 如果键值对带有过期时间的话, 那么过期时间也会一起记录
+
+![image-20221121231155754](E:\code\JavaStudySummary\docs\_content\chapter01_redis\redis设计与实现\test\image-20221121231155754.png)
+
+- `TYPE`: 记录了value的类型, 长度为1字节, 值可以是以下常量中的一个:
+
+  ```c
+  #define REDIS_RDB_TYPE_STRING 0
+  #define REDIS_RDB_TYPE_LIST   1
+  #define REDIS_RDB_TYPE_SET    2
+  #define REDIS_RDB_TYPE_ZSET   3
+  #define REDIS_RDB_TYPE_HASH   4
+  #define REDIS_RDB_TYPE_LIST_ZIPLIST  10
+  #define REDIS_RDB_TYPE_SET_INTSET    11
+  #define REDIS_RDB_TYPE_ZSET_ZIPLIST  12
+  #define REDIS_RDB_TYPE_HASH_ZIPLIST  13
+  ```
+
+  这些常量代表的是一种对象类型或者底层编码, 当服务器读入RDB文件中的键值对数据时, 程序会`根据TYPE的值来决定如何读入和解释`value的数据.
+
+- `key`: key总是一个字符串对象, 它的编码方式和`REDIS_RDB_TYPE_STRING`的value是一样的, 内容长度不同, key部分的长度也会不同.
+
+- `value`: 根据TYPE类型不同, 以及保存内容长度的不同, 保存vlaue的结构和长度也会有所不同.
+
+- `EXPIRETIME_MS`: 是个常量, 长度为1字节, 作用是`告知读入程序, 接下来要读入的将是一个以毫秒为单位的过期时间`.
+
+- `ms`: 是一个8字节长度的带符号整数, 记录着一个以毫秒为单位的UNIX时间戳, 这个字段表示的就是`键值对的过期时间`.
+
+> key, value, type三个字段时一定有的. `EXPIRETIME_MS`, `ms`只有键值对带有过期时间的时候才会存在
+
+
+
+#### 3. value的编码:
+
+RDB文件中的每个value部分都保存了一个值对象, 每个值对象的类型都由与之对应的TYPE记录, TYPE不同value部分的结构, 长度也会有所不同.
