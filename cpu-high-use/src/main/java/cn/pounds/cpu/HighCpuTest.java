@@ -38,4 +38,7 @@ public class HighCpuTest {
             }
         });
     }
+
+    public static void test(String[] args) {
+        String s = "111";    }
 }
