@@ -40,5 +40,7 @@ public class HighCpuTest {
     }
 
     public static void test(String[] args) {
-        String s = "111";    }
+        String s = "111";
+        String aaa = "aaa";
+    }
 }
