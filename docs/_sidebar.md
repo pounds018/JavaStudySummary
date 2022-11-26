@@ -1,6 +1,7 @@
 * [第 1 章 redis](_content/chapter01_redis/coverpage.md)
   * [redis设计与实现]
     * [1_数据结构](_content/chapter01_redis/redis设计与实现/1_数据结构.md)
+    * [2_单机数据库的实现](_content/chapter01_redis/redis设计与实现/2_单机数据库的实现.md)
 * [第 2 章 RabbitMQ](_content/chapter02_RabbitMQ/coverpage.md)
 * [第 3 章 Rpc](_content/chapter03_RPC/coverpage.md)
   * [GRPC](_content/chapter03_RPC/coverpage.md)
