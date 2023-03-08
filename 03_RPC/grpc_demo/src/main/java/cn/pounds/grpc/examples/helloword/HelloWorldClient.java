@@ -10,7 +10,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * @author: pounds
  * @date: 2022/2/19 0:07
- * @desc:
+ * @desc:111
  */
 public class HelloWorldClient {
 	// 服务端的代理对象
